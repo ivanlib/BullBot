@@ -1,60 +1,40 @@
 # BullBot — Campus AI Knowledge Assistant for Sac State
 
-BullBot is a Retrieval-Augmented Generation (RAG) assistant built on Amazon Bedrock that
-answers California State University, Sacramento (Sac State) students' questions about
-transfer credits, financial aid, and degree planning. Every answer is grounded in campus
-documents with explicit citations; when the system is not confident, it refers the student
-to Academic Advising or the Financial Aid office instead of guessing. It supports English
-and Spanish and screens for student PII and off-topic requests.
+[![CI](https://github.com/ivanlib/BullBot/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanlib/BullBot/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-The project runs in two modes: an **offline demo mode** that needs no AWS account, and a
-**live mode** backed by Amazon Bedrock Knowledge Bases and Guardrails.
+BullBot answers student questions about transfer credits, financial aid, and degree
+planning, and backs up each answer with a citation to the source document. When the
+documents don't clearly support an answer, it points the student to Academic Advising or
+the Financial Aid office instead of guessing. It handles English and Spanish and screens
+out personal information and off-topic questions.
 
-> **Background.** I started BullBot during the YouthTechSacState Kiro Hackathon and have
-> continued developing it as a personal software-engineering project. It is an independent
-> portfolio project and is not affiliated with or endorsed by California State University,
-> Sacramento. The bundled knowledge-base documents are illustrative placeholders, not
-> official campus policy.
+I built it to get hands-on with Retrieval-Augmented Generation (RAG) on AWS: a Bedrock
+Knowledge Base for retrieval, Titan embeddings in an OpenSearch Serverless vector store,
+Bedrock Guardrails for safety, and a small FastAPI + vanilla-JS web app on top. It started
+at the YouthTechSacState Kiro Hackathon and I've kept working on it as a personal project.
+
+It runs in two modes:
+
+- **Demo mode** — answers come from a local file of prepared examples. No AWS account or
+  credentials needed, so anyone can clone the repo and try the UI.
+- **Live mode** — answers come from Amazon Bedrock using your own AWS resources.
+
+> The knowledge-base documents in `docs/` are made-up samples for demonstration, not real
+> Sac State policy. BullBot is a personal project, not affiliated with or endorsed by the
+> university, and isn't a substitute for talking to an advisor.
 
 ## Screenshots
 
-Welcome screen (offline demo mode):
+Welcome screen (demo mode):
 
 ![BullBot welcome screen](docs/screenshots/welcome.png)
 
-Example conversation — a grounded answer with a table and citations:
+A grounded answer with a table and citations:
 
 ![BullBot conversation with citations](docs/screenshots/conversation.png)
 
-## Features
-
-- **Grounded answers with citations** — responses cite the source document and section,
-  e.g. `[financial-aid-cal-grant-b-policy.md, §Renewal Requirements]`.
-- **Confidence-aware routing** — refers students to the right office when documents don't
-  support a confident answer, rather than hallucinating.
-- **Bilingual** — replies in English or Spanish depending on the question.
-- **Safety screening** — blocks student PII (SSNs, IDs, phone, email) and off-topic
-  requests. In live mode this uses Amazon Bedrock Guardrails.
-- **Two operating modes** — offline demo (no AWS) and live Amazon Bedrock.
-- **Lightweight web UI** — ChatGPT-style chat with Markdown, tables, loading state, error
-  handling, and a "New chat" button; works on desktop and mobile.
-- **Reproducible infrastructure** — idempotent `boto3` scripts build the full AWS stack.
-
-## Technology stack
-
-| Layer | Technology |
-|-------|------------|
-| Backend | Python, FastAPI, uvicorn |
-| Frontend | HTML / CSS / vanilla JS (no build step); `marked` + `DOMPurify` via CDN |
-| RAG orchestration | Amazon Bedrock Knowledge Bases |
-| Generation model | Anthropic Claude on Amazon Bedrock (via inference profile) |
-| Embeddings | Amazon Titan Text Embeddings V2 (`amazon.titan-embed-text-v2:0`, 1024-dim) |
-| Vector store | Amazon OpenSearch Serverless (VECTORSEARCH) |
-| Source storage | Amazon S3 |
-| Safety | Amazon Bedrock Guardrails (PII, denied topics) |
-| Tests / CI | pytest, GitHub Actions |
-
-## Architecture
+## How it works
 
 ```
                  Browser (chat UI, Markdown + citations)
@@ -64,190 +44,175 @@ Example conversation — a grounded answer with a table and citations:
                                  |
                  Shared chat core (web/bullbot_core.py)
                         |                         |
-           demo mode (offline)            live mode (AWS)
+             demo mode (offline)          live mode (AWS)
                         |                         |
      web/demo_responses.json         Amazon Bedrock
-     (prepared sample answers)         |   RetrieveAndGenerate + Guardrail
-                                       v
-                        Knowledge Base (Titan V2 embeddings)
-                              |                     |
-                       S3 source docs        OpenSearch Serverless
+     (prepared sample answers)         RetrieveAndGenerate + Guardrail
+                                               |
+                                   Knowledge Base (Titan V2 embeddings)
+                                        |               |
+                                 S3 source docs   OpenSearch Serverless
 ```
 
-Both modes share one code path. `bullbot_core.ask()` branches to the offline fixtures when
-`BULLBOT_DEMO_MODE=1`; otherwise it calls Bedrock. The web backend and the CLI
-(`scripts/bullbot_chat.py`) reuse the same core, so there is no duplicated inference logic.
+The web backend and the command-line client (`scripts/bullbot_chat.py`) call the same
+function, `bullbot_core.ask()`. That function checks `BULLBOT_DEMO_MODE`: when it's set, it
+returns a prepared answer from `web/demo_responses.json`; otherwise it calls Bedrock. There
+is only one inference path, and no local AI models — live inference happens on Bedrock.
 
-Design detail (chunking strategy, vector index mapping, guardrail configuration, agent
-instructions, and the build plan) lives in [`docs/specs/`](docs/specs/).
+The frontend is plain HTML/CSS/JS with no build step. Markdown is rendered with `marked`
+and sanitized with `DOMPurify`, both loaded from a CDN. The chat supports conversation
+history within a session, tables and links, a loading indicator, error messages, and a
+"New chat" button, and works on desktop and mobile.
 
-## AWS Bedrock requirements (live mode only)
+Design notes — chunking strategy, the vector index mapping, guardrail configuration, agent
+instructions, and the original build plan — are in [`docs/specs/`](docs/specs/).
 
-Live mode calls your own AWS account — the project does not include or share any AWS
-resources, and demo mode needs none of this.
+## Technology stack
 
-- An AWS account with **Amazon Bedrock model access enabled** for Anthropic Claude (a
-  generation model) and Amazon Titan Text Embeddings V2.
-- Permissions for Bedrock Knowledge Bases, OpenSearch Serverless, S3, and IAM to run the
-  setup scripts, plus `bedrock:RetrieveAndGenerate` and `bedrock:ApplyGuardrail` at runtime.
-- Credentials supplied through your own AWS CLI session or profile (never committed).
-- Running these resources incurs AWS charges; `scripts/99_teardown.py` removes them.
+| Layer | Technology |
+|-------|------------|
+| Backend | Python, FastAPI, uvicorn |
+| Frontend | HTML / CSS / vanilla JS; `marked` + `DOMPurify` via CDN |
+| Retrieval | Amazon Bedrock Knowledge Bases |
+| Generation | Anthropic Claude on Amazon Bedrock (via inference profile) |
+| Embeddings | Amazon Titan Text Embeddings V2 (`amazon.titan-embed-text-v2:0`, 1024-dim) |
+| Vector store | Amazon OpenSearch Serverless (VECTORSEARCH) |
+| Source storage | Amazon S3 |
+| Safety | Amazon Bedrock Guardrails (PII, denied topics) |
+| Tests / CI | pytest, GitHub Actions |
 
-> Note: Amazon Bedrock Agents ("classic") is in maintenance mode and closed to new
-> customers. BullBot therefore drives the Knowledge Base and Guardrail directly via
-> `RetrieveAndGenerate`, which is the recommended path and needs no classic agent.
+## Quick start (demo mode, no AWS)
 
-## Setup scripts (`scripts/`) — provisioning live mode
-
-Idempotent `boto3` scripts, run in order (see `tasks.md` for details):
-
-```
-pip install -r scripts/requirements.txt
-python scripts/01_create_s3_source.py
-python scripts/03_create_kb_role.py
-python scripts/02_create_vector_store.py <KB_ROLE_ARN>
-python scripts/04_create_knowledge_base.py <KB_ROLE_ARN> <COLLECTION_ARN>
-python scripts/05_create_guardrail.py
-python scripts/06_create_agent.py <KB_ID> <GUARDRAIL_ID> <GUARDRAIL_VERSION>
-python scripts/07_invoke_demo.py <AGENT_ID> <ALIAS_ID>
-python scripts/99_teardown.py   # when done, to avoid charges
-```
-
-Set your region and resource names once in `scripts/config.py`. Put campus documents in
-`docs/` before running (a sample `advising-contacts.md` is included).
-
-## Web interface (`web/`)
-
-A lightweight, ChatGPT-style chat UI for BullBot. It reuses the exact same Bedrock
-Knowledge Base + Guardrail logic as the CLI (`scripts/bullbot_chat.py`) through a shared
-core module (`web/bullbot_core.py`), so there is no duplicated inference logic and no
-local AI models — all inference stays on AWS Bedrock.
-
-- **Backend:** FastAPI + uvicorn, a single `/api/chat` endpoint.
-- **Frontend:** plain HTML/CSS/JS (no build step, no `node_modules`). Markdown is rendered
-  with `marked` and sanitized with `DOMPurify`, both loaded from a CDN.
-- **Features:** session conversation history, Markdown (headings, lists, tables, links),
-  citations/sources, loading indicator, error messages, "New chat" button, mobile-friendly.
-
-### Operating modes
-
-BullBot has two permanent modes:
-
-| Mode | How to enable | What it does | AWS needed? |
-|------|---------------|--------------|-------------|
-| **Live** (default) | set `BULLBOT_KB_ID` + `BULLBOT_GUARDRAIL_ID` | Answers from the real Amazon Bedrock Knowledge Base, with Bedrock Guardrails for PII and topic safety | Yes — credentials + resources |
-| **Demo** (offline) | set `BULLBOT_DEMO_MODE=1` | Answers from prepared examples in `web/demo_responses.json`; a "Demo Mode" badge shows in the UI | **No** — makes zero AWS calls |
-
-Demo mode exists so anyone can run and evaluate the project without an AWS account, and so
-the UI stays demonstrable after temporary credentials expire. **Important:** demo mode's
-safety checks are simple keyword matches and are **not** equivalent to Amazon Bedrock
-Guardrails — they are for demonstration only. Prepared answers are either real Bedrock
-captures or clearly-labeled sample content, and all citations point to the illustrative
-placeholder documents in `docs/`.
-
-### Requirements
-
-- Python 3.10+ with the existing project virtualenv (reuse it — do not create a new one).
-- Backend deps (installed once): `pip install -r web/requirements.txt`
-  (`boto3` is already provided by `scripts/requirements.txt`).
-- **Live mode only:** valid AWS credentials in your shell (via `aws login` / an AWS
-  profile). The app never stores or exposes credentials. Demo mode needs none.
-
-### Environment variables
-
-The backend reads configuration from env vars only (see `web/.env.example`). No AWS
-credentials go here — those come from your AWS CLI session.
-
-| Variable | Meaning | Example |
-|----------|---------|---------|
-| `BULLBOT_DEMO_MODE` | Set to `1` for offline demo mode | `1` |
-| `BULLBOT_KB_ID` | Knowledge Base ID (live mode) | `your-kb-id` |
-| `BULLBOT_GUARDRAIL_ID` | Guardrail ID (live mode) | `your-guardrail-id` |
-| `BULLBOT_GUARDRAIL_VERSION` | Guardrail version, never `DRAFT` (live mode) | `1` |
-| `AWS_REGION` | AWS region (live mode) | `us-east-1` |
-
-In live mode, get the KB ID from the output of `scripts/04_create_knowledge_base.py` (or the
-Bedrock console) and the guardrail ID from `scripts/05_create_guardrail.py`.
-
-### Start in demo mode (no AWS)
+Clone the repo, create a virtual environment, install the web dependencies, and start the
+server with demo mode on. From the project root:
 
 ```powershell
-$env:BULLBOT_DEMO_MODE="1"
-python -m uvicorn app:app --host 127.0.0.1 --port 8000
+# Windows (PowerShell)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r web/requirements.txt
+
+$env:BULLBOT_DEMO_MODE = "1"
+python -m uvicorn app:app --app-dir web --host 127.0.0.1 --port 8000
 ```
 
-### Start in live mode (AWS Bedrock)
+```bash
+# macOS / Linux
+python -m venv .venv
+source .venv/bin/activate
+pip install -r web/requirements.txt
 
-```powershell
-$env:BULLBOT_KB_ID="your-kb-id"
-$env:BULLBOT_GUARDRAIL_ID="your-guardrail-id"
-$env:BULLBOT_GUARDRAIL_VERSION="1"
-$env:AWS_REGION="us-east-1"
-python -m uvicorn app:app --host 127.0.0.1 --port 8000
+export BULLBOT_DEMO_MODE=1
+python -m uvicorn app:app --app-dir web --host 127.0.0.1 --port 8000
 ```
 
-Run both from the `web/` folder, then open http://127.0.0.1:8000 in a browser.
+Open http://127.0.0.1:8000 and you'll see a "Demo Mode" badge in the header. Stop the
+server with `Ctrl+C`.
 
-> Do **not** add `--reload` — the file watcher wastes CPU and is unnecessary for a demo.
+In demo mode BullBot only answers the prepared questions (transfer credits, Cal Grant B,
+Data Science minor, a Spanish example, plus PII and off-topic cases); anything else gets a
+short fallback message. The offline PII and off-topic checks are simple keyword matches
+meant to illustrate the behavior — they are not the real Bedrock Guardrails and shouldn't
+be relied on.
 
-### Stop the web interface
+## Running tests
 
-Press `Ctrl+C` in the terminal running uvicorn. That shuts the server down cleanly with
-no lingering background process. (A closed socket may show briefly in `TIME_WAIT`; the OS
-releases it within a minute.)
+Tests run entirely in demo mode: no AWS credentials or network, and they assert that no AWS
+client is ever created.
 
-### Troubleshooting
-
-| Symptom | Fix |
-|---------|-----|
-| `503 Server not configured` | Live mode needs `BULLBOT_KB_ID` + `BULLBOT_GUARDRAIL_ID`, or set `BULLBOT_DEMO_MODE=1` for offline mode. |
-| `502 could not reach knowledge service` | AWS credentials expired — run `aws login`. Check the server log line for detail. |
-| `504 took too long` | Bedrock was slow; retry. Timeout is 60s (`REQUEST_TIMEOUT_SECONDS` in `app.py`). |
-| Answers look like raw `*asterisks*` | Markdown libs blocked by a strict network; they load from jsDelivr CDN. |
-| Port 8000 in use | Another server is running, or a socket is in `TIME_WAIT` — wait a minute or use `--port 8001`. |
-
-### Keeping resource usage low
-
-- Reuse the existing virtualenv and installed packages — don't reinstall dependencies.
-- Run **one** server at a time; never use `--reload` or multiple dev servers.
-- No local AI models are used; inference is on Bedrock, so RAM/CPU stay low
-  (the server idles around ~80 MB RAM).
-- `.vscode/settings.json` excludes `.venv`, `__pycache__`, and logs from IDE indexing and
-  file watching to cut editor RAM/CPU/SSD usage.
-- The backend caps input length (2000 chars) and request time (60s), and bounds the
-  in-memory session store, so a single process stays small.
-
-### Tests
-
-Tests run entirely offline in demo mode — no AWS credentials or network required. They also
-assert that no AWS client is ever created in demo mode.
-
-```powershell
+```bash
 pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```
 
+## Live mode (Amazon Bedrock)
+
+Live mode uses your own AWS account; the repo doesn't include or share any AWS resources.
+You'll need:
+
+- An AWS account with Bedrock model access enabled for an Anthropic Claude model and Amazon
+  Titan Text Embeddings V2.
+- Permission to create the resources below, plus `bedrock:RetrieveAndGenerate` and
+  `bedrock:ApplyGuardrail` at runtime.
+- Credentials from your own AWS CLI session or profile (never committed). The app reads
+  configuration from environment variables only — see `web/.env.example`.
+
+Running these resources costs money; `scripts/99_teardown.py` removes them when you're done.
+
+### Provision the resources
+
+The `scripts/` folder has idempotent `boto3` scripts. `scripts/config.py` holds the region
+and resource names. Run them from the project root, in this order (step 3 creates the IAM
+role that step 2's data-access policy needs):
+
+```bash
+pip install -r scripts/requirements.txt
+python scripts/01_create_s3_source.py                                    # S3 bucket + upload docs/
+python scripts/03_create_kb_role.py                                      # IAM role for the KB
+python scripts/02_create_vector_store.py <KB_ROLE_ARN>                   # OpenSearch Serverless
+python scripts/04_create_knowledge_base.py <KB_ROLE_ARN> <COLLECTION_ARN>  # KB + ingest docs
+python scripts/05_create_guardrail.py                                    # PII + topic guardrail
+python scripts/verify_retrieval.py <KB_ID>                               # sanity-check retrieval
+```
+
+Scripts `06_create_agent.py` and `07_invoke_demo.py` build a classic Bedrock Agent. They're
+kept for reference, but BullBot doesn't need them: it calls `RetrieveAndGenerate` directly,
+which is the current recommended approach (Bedrock Agents "classic" is in maintenance mode
+and closed to new customers). See [`docs/specs/tasks.md`](docs/specs/tasks.md) for details.
+
+### Start in live mode
+
+Set the IDs from the script output (KB ID from step 4, guardrail ID from step 5), then run
+the server from the project root:
+
+```powershell
+# Windows (PowerShell)
+$env:BULLBOT_KB_ID = "your-kb-id"
+$env:BULLBOT_GUARDRAIL_ID = "your-guardrail-id"
+$env:BULLBOT_GUARDRAIL_VERSION = "1"
+$env:AWS_REGION = "us-east-1"
+python -m uvicorn app:app --app-dir web --host 127.0.0.1 --port 8000
+```
+
+### Environment variables
+
+| Variable | Meaning | Example |
+|----------|---------|---------|
+| `BULLBOT_DEMO_MODE` | `1` turns on offline demo mode | `1` |
+| `BULLBOT_KB_ID` | Knowledge Base ID (live mode) | `your-kb-id` |
+| `BULLBOT_GUARDRAIL_ID` | Guardrail ID (live mode) | `your-guardrail-id` |
+| `BULLBOT_GUARDRAIL_VERSION` | Guardrail version, not `DRAFT` (live mode) | `1` |
+| `AWS_REGION` | AWS region (live mode) | `us-east-1` |
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `503 Server not configured` | Set `BULLBOT_KB_ID` + `BULLBOT_GUARDRAIL_ID` for live mode, or `BULLBOT_DEMO_MODE=1` for demo mode. |
+| `502 could not reach knowledge service` | Live mode only: AWS credentials likely expired — refresh them. The server log has the detail. |
+| `504 took too long` | Bedrock was slow; retry. The request timeout is 60s (`REQUEST_TIMEOUT_SECONDS` in `web/app.py`). |
+| Answers show raw `*asterisks*` | The Markdown libraries (loaded from a CDN) were blocked by the network. |
+| Port 8000 already in use | Another process has it; use `--port 8001`, or wait for a closing socket to clear. |
+
+## Notes on resource use
+
+- Run a single server; don't use `--reload` (its file watcher isn't needed here).
+- No local models are loaded — inference is on Bedrock, so the server stays small
+  (around 80 MB RAM when idle).
+- The backend caps input at 2000 characters, times out requests at 60s, and bounds its
+  in-memory session store.
+- `.vscode/settings.json` keeps `.venv`, `__pycache__`, and logs out of editor indexing.
+
 ## Limitations
 
-- **Demo content is illustrative.** The knowledge-base documents in `docs/` are synthetic
-  placeholders, not official Sac State policy. Do not rely on them for real decisions.
-- **Demo-mode safety is not Bedrock Guardrails.** Offline mode uses simple keyword matching
-  for PII and off-topic screening — a demonstration only, not equivalent to the real
-  Guardrails used in live mode.
-- **Demo mode answers a fixed set of questions.** Anything outside the prepared scenarios
-  returns a fallback message.
-- **Live mode depends on your AWS account**, model access, and credentials, and incurs cost
-  while resources exist.
-- **Not an official advising tool.** BullBot supplements, and does not replace, Academic
-  Advising or the Financial Aid office.
-
-## Project background
-
-BullBot began at the YouthTechSacState Kiro Hackathon and is maintained as an individual
-portfolio project exploring RAG, grounded generation with citations, and AI safety
-guardrails on AWS. It demonstrates end-to-end work: infrastructure-as-code, a reusable
-Python core, a web UI, offline/online operating modes, and automated tests.
+- The bundled documents are made-up samples, not real policy. Answers reflect those samples
+  and shouldn't be used for actual decisions.
+- Demo-mode PII and off-topic screening is keyword-based and only approximates the real
+  Bedrock Guardrails used in live mode.
+- Demo mode only answers the prepared questions; everything else returns a fallback.
+- Live mode depends on your AWS account, model access, and credentials, and incurs cost.
+- BullBot is a learning project, not an official advising tool.
 
 ## License
 
-Released under the [MIT License](LICENSE). Copyright (c) 2026 Ivan Librado.
+MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Ivan Librado.
