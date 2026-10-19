@@ -1,0 +1,54 @@
+{
+  "_about": "Pre-recorded responses for BullBot offline demo mode (BULLBOT_DEMO_MODE=1). These let the web UI be demonstrated with NO AWS access, credentials, or cost. Answers marked 'live_capture' are real Amazon Bedrock outputs captured during development; answers marked 'sample' are illustrative content written to mirror the placeholder knowledge-base documents. All citations point to the placeholder demo documents in docs/, which are themselves illustrative and not official Sac State policy.",
+  "_disclaimer": "Offline mode is a demonstration only. Its keyword-based safety checks are NOT equivalent to Amazon Bedrock Guardrails and do not provide the same protection. Live mode (default) uses the real Knowledge Base and Guardrail.",
+  "fallback": {
+    "answer": "This is a demonstration of BullBot running in offline Demo Mode, so I can only answer a few prepared questions. Try asking about transfer credits, Cal Grant B renewal, or adding a Data Science minor. In live mode, BullBot answers any in-scope question using the Amazon Bedrock knowledge base with real citations.",
+    "blocked": false
+  },
+  "safety": [
+    {
+      "id": "pii",
+      "match_any": ["ssn", "social security", "123-45-6789", "my student id", "credit card"],
+      "blocked": true,
+      "source": "live_capture",
+      "answer": "For your privacy, I can't accept personal identifiers like SSNs, student ID numbers, phone numbers, or email addresses. Please re-ask without them.\n\n*(Demo Mode: this is a simple keyword check and is NOT equivalent to Amazon Bedrock Guardrails PII protection used in live mode.)*"
+    },
+    {
+      "id": "offtopic",
+      "match_any": ["kings game", "weather", "write me a poem", "stock", "football", "who won", "movie", "joke"],
+      "blocked": true,
+      "source": "live_capture",
+      "answer": "I can only help with Sac State academics, transfer credits, degree planning, and financial aid. Try asking me about one of those.\n\n*(Demo Mode: this is a simple keyword check and is NOT equivalent to Amazon Bedrock Guardrails topic filtering used in live mode.)*"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "transfer_credits",
+      "match_any": ["transfer", "community college", "cc credit", "credits count", "which courses"],
+      "blocked": false,
+      "source": "sample",
+      "answer": "Yes, specific community college courses transfer into the Sac State Computer Science major. Here are the approved mappings:\n\n| Community College Course | Transfers To (Sac State) | Units |\n|---|---|---|\n| MATH 11 — Calculus I | MATH 30 — Calculus I | 4 |\n| MATH 12 — Calculus II | MATH 31 — Calculus II | 4 |\n| MATH 13 — Linear Algebra | MATH 35 — Linear Algebra | 3 |\n| CIS 10 — Programming Concepts I | CSC 20 — Programming Concepts I | 3 |\n| CIS 11 — Programming Concepts II | CSC 28 — Programming Concepts II | 3 |\n| CIS 21 — Computer Architecture | CSC 35 — Computer Architecture | 3 |\n\nA few important notes:\n- Introductory courses like \"CIS 1 — Introduction to Computers\" do **not** transfer into the major.\n- A maximum of 70 lower-division transfer units can apply to the degree.\n- Upper-division CS core courses (CSC 130 and above) must be completed at Sac State.\n\nBring your transcript to the Academic Advising Center for an official evaluation.\n\n**Sources:**\n- [assist-articulation-cc-to-sacstate-cs.md, §Lower-Division Course Mapping]\n- [sacstate-catalog-cs-2025.md, §Lower-Division Requirements]\n\n*(Demo Mode: sample answer based on the illustrative demo documents.)*"
+    },
+    {
+      "id": "cal_grant_b",
+      "match_any": ["cal grant", "grant b", "renew", "financial aid eligibility", "fafsa"],
+      "blocked": false,
+      "source": "live_capture",
+      "answer": "Here's what the official policy document says about renewing your Cal Grant B award. To renew, you must meet **all** of the following requirements each year:\n\n1. **Maintain Satisfactory Academic Progress (SAP)**, which includes a minimum cumulative GPA of 2.0. [financial-aid-cal-grant-b-policy.md, §Renewal Requirements]\n2. **Stay enrolled at least half-time** in an eligible program. [financial-aid-cal-grant-b-policy.md, §Renewal Requirements]\n3. **Continue to meet the Cal Grant income and asset ceilings** for the award year. [financial-aid-cal-grant-b-policy.md, §Income and Asset Ceilings]\n4. **File a renewal FAFSA** (or California Dream Act Application) by the March 2 priority deadline. [financial-aid-cal-grant-b-policy.md, §Renewal Requirements]\n5. **Not exceed the maximum award eligibility period** (up to four years of full-time equivalent benefits). [financial-aid-cal-grant-b-policy.md, §Renewal Requirements]\n\nBecause BullBot doesn't have access to your personal student record, your individual renewal status and specific income ceilings must be confirmed with the Financial Aid & Scholarships Office. [advising-contacts.md, §Financial Aid]\n\n**Sources:**\n- [financial-aid-cal-grant-b-policy.md, §Renewal Requirements]\n- [financial-aid-cal-grant-b-policy.md, §Income and Asset Ceilings]\n- [advising-contacts.md, §Financial Aid]\n\n*(Demo Mode: captured from a real Amazon Bedrock response during development.)*"
+    },
+    {
+      "id": "data_science_minor",
+      "match_any": ["data science minor", "ds minor", "add a minor", "minor without delaying", "minor plan"],
+      "blocked": false,
+      "source": "sample",
+      "answer": "You can add the Data Science minor without delaying graduation by overlapping minor courses with your CS technical electives.\n\nThe minor requires 18 units, including:\n- STAT 50 — Introduction to Probability and Statistics (3 units)\n- CSC 177 — Data Mining and Analytics (3 units)\n- STAT 115A — Statistical Computing (3 units)\n\nBecause **CSC 177 and STAT 115A also count as approved CS technical electives** [sacstate-catalog-cs-2025.md, §Technical Electives], taking them as your electives applies those units to both the major and the minor.\n\nSuggested sequencing:\n- **Term 1:** STAT 50 (take early — it is a prerequisite for several electives)\n- **Term 2:** CSC 177 (counts as a CS technical elective)\n- **Term 3:** STAT 115A (counts as a CS technical elective) + one approved minor elective\n\nThis keeps the extra units to a minimum. An advisor must confirm the final plan.\n\n**Sources:**\n- [data-science-minor-requirements.md, §Required Courses]\n- [data-science-minor-requirements.md, §Overlap With Computer Science]\n- [sacstate-catalog-cs-2025.md, §Technical Electives]\n\n*(Demo Mode: sample answer based on the illustrative demo documents.)*"
+    },
+    {
+      "id": "spanish_transfer",
+      "match_any": ["creditos", "colegio comunitario", "transferen", "carrera de computer science", "en espanol", "español"],
+      "blocked": false,
+      "source": "sample",
+      "answer": "Sí. Algunos cursos del colegio comunitario se transfieren a la carrera de Computer Science en Sac State. Por ejemplo:\n\n| Curso del colegio comunitario | Se transfiere a (Sac State) | Unidades |\n|---|---|---|\n| MATH 11 — Cálculo I | MATH 30 — Cálculo I | 4 |\n| CIS 10 — Programación I | CSC 20 — Programación I | 3 |\n| CIS 21 — Arquitectura de Computadoras | CSC 35 — Arquitectura de Computadoras | 3 |\n\nNotas importantes:\n- Los cursos introductorios (por ejemplo, \"CIS 1\") **no** se transfieren a la carrera.\n- Los cursos de división superior (CSC 130 en adelante) deben completarse en Sac State.\n\nLleva tu expediente académico al Centro de Asesoría Académica para una evaluación oficial.\n\n**Fuentes:**\n- [assist-articulation-cc-to-sacstate-cs.md, §Lower-Division Course Mapping]\n- [sacstate-catalog-cs-2025.md, §Lower-Division Requirements]\n\n*(Modo demostración: respuesta de ejemplo basada en los documentos ilustrativos.)*"
+    }
+  ]
+}

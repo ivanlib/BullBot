@@ -1,0 +1,234 @@
+/* BullBot web UI — professional, responsive, Sac State green palette. */
+
+:root {
+  --green: #043927;        /* Sac State hornet green */
+  --green-light: #0a5c3f;
+  --gold: #c4b581;
+  --bg: #f4f6f5;
+  --surface: #ffffff;
+  --text: #1b2420;
+  --muted: #5c6b63;
+  --border: #e2e8e4;
+  --user-bubble: #043927;
+  --bot-bubble: #ffffff;
+  --danger: #b42318;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: var(--green);
+  color: #fff;
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 0.75rem; }
+.brand-mark { font-size: 1.75rem; }
+.brand h1 { margin: 0; font-size: 1.15rem; letter-spacing: 0.5px; }
+.brand p { margin: 0; font-size: 0.78rem; color: var(--gold); }
+.demo-badge {
+  margin-left: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #fde68a;
+  color: #713f12;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  align-self: center;
+}
+.new-chat-btn {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+.new-chat-btn:hover { background: rgba(255, 255, 255, 0.14); }
+
+/* Message list */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  scroll-behavior: smooth;
+}
+
+.welcome {
+  margin: auto;
+  max-width: 640px;
+  text-align: center;
+  color: var(--muted);
+}
+.welcome h2 { color: var(--text); font-size: 1.4rem; margin-bottom: 0.5rem; }
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+.chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.chip:hover { border-color: var(--green-light); transform: translateY(-1px); }
+
+/* Message rows */
+.row { display: flex; gap: 0.75rem; max-width: 820px; width: 100%; margin: 0 auto; }
+.row.user { flex-direction: row-reverse; }
+.avatar {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 1.05rem;
+  background: var(--green);
+  color: #fff;
+}
+.row.user .avatar { background: var(--gold); color: var(--green); }
+
+.bubble {
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius);
+  background: var(--bot-bubble);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.row.user .bubble {
+  background: var(--user-bubble);
+  color: #fff;
+  border: none;
+}
+.bubble.blocked {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #7c2d12;
+}
+.bubble.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: var(--danger);
+}
+
+/* Markdown content inside bot bubbles */
+.bubble h1, .bubble h2, .bubble h3 { margin: 0.6rem 0 0.4rem; line-height: 1.3; }
+.bubble h1 { font-size: 1.25rem; }
+.bubble h2 { font-size: 1.1rem; }
+.bubble h3 { font-size: 1rem; }
+.bubble p { margin: 0.5rem 0; }
+.bubble ul, .bubble ol { margin: 0.5rem 0; padding-left: 1.4rem; }
+.bubble li { margin: 0.2rem 0; }
+.bubble a { color: var(--green-light); }
+.bubble code {
+  background: #eef2f0;
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+.bubble pre { background: #eef2f0; padding: 0.8rem; border-radius: 8px; overflow-x: auto; }
+.bubble table {
+  border-collapse: collapse;
+  margin: 0.6rem 0;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.bubble th, .bubble td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+.bubble th { background: #f0f4f2; }
+
+/* Sources block (rendered from the answer's Sources list) */
+.bubble hr { border: none; border-top: 1px solid var(--border); margin: 0.8rem 0; }
+
+/* Typing indicator */
+.typing { display: inline-flex; gap: 4px; align-items: center; }
+.typing span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted);
+  animation: blink 1.3s infinite both;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+/* Composer */
+.composer {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.9rem 1.25rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.composer textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  font: inherit;
+  max-height: 160px;
+  outline: none;
+}
+.composer textarea:focus { border-color: var(--green-light); }
+.composer button {
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0 1.4rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.composer button:hover:not(:disabled) { background: var(--green-light); }
+.composer button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Mobile */
+@media (max-width: 600px) {
+  .brand p { display: none; }
+  .messages { padding: 1rem; }
+  .row { gap: 0.5rem; }
+  .composer { padding: 0.7rem; }
+  .new-chat-btn { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+}

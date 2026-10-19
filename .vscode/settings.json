@@ -1,0 +1,32 @@
+{
+  "// note": "Reduces IDE RAM/CPU/SSD usage by excluding heavy, generated, or vendored folders from indexing and file watching.",
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/*.pyc": true,
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.mypy_cache/**": true,
+    "**/logs/**": true,
+    "**/*.log": true
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true
+  },
+  "search.exclude": {
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/node_modules": true,
+    "**/*.log": true
+  },
+  "python.analysis.exclude": [
+    "**/.venv/**",
+    "**/__pycache__/**"
+  ],
+  "python.terminal.activateEnvironment": false,
+  "python.analysis.autoImportCompletions": false
+}

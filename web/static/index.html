@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BullBot — Sac State Campus Assistant</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <!-- Marked renders Markdown (headings, lists, tables, links) from Bedrock answers. -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+  <!-- DOMPurify sanitizes the rendered HTML before it touches the DOM. -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark">🐂</span>
+      <div>
+        <h1>BullBot</h1>
+        <p>Sac State Campus Knowledge Assistant</p>
+      </div>
+      <span id="demo-badge" class="demo-badge" hidden>Demo Mode</span>
+    </div>
+    <button id="new-chat" class="new-chat-btn" title="Start a new conversation">
+      + New chat
+    </button>
+  </header>
+
+  <main id="messages" class="messages" aria-live="polite">
+    <div class="welcome">
+      <h2>How can I help with your Sac State questions?</h2>
+      <p>Ask about transfer credits, financial aid, or degree planning. Answers are
+         grounded in official campus documents with citations.</p>
+      <div class="suggestions">
+        <button class="chip">Do my community college credits transfer to the CS major?</button>
+        <button class="chip">What are the Cal Grant B renewal requirements?</button>
+        <button class="chip">How can I add a Data Science minor without delaying graduation?</button>
+      </div>
+    </div>
+  </main>
+
+  <form id="composer" class="composer" autocomplete="off">
+    <textarea id="input" rows="1" maxlength="2000"
+              placeholder="Ask BullBot a question..."></textarea>
+    <button id="send" type="submit" aria-label="Send">Send</button>
+  </form>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
