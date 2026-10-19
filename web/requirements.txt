@@ -1,4 +1,7 @@
-# Web backend only. boto3/opensearch deps are already in scripts/requirements.txt.
+# Dependencies to run the BullBot web backend.
+# boto3 is required even for offline demo mode because bullbot_core imports
+# scripts/config.py (which imports boto3) at module load; it is only *called* in live mode.
+boto3>=1.34.0
 fastapi>=0.110.0
 uvicorn>=0.29.0
 pydantic>=2.6.0
